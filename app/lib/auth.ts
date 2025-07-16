@@ -1,3 +1,5 @@
+'use server';
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -30,7 +32,7 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/user/profile`, {
       headers: {
-        Authorization: `Bearer ${tokens.accessToken}`,
+        'Authorization': `Bearer ${tokens.accessToken}`,
       },
     });
 

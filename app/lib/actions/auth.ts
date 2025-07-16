@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -15,6 +15,7 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  role: z.enum(["ADMIN", "USER"]),
 });
 
 export async function loginAction(prevState: any, formData: FormData) {
@@ -29,8 +30,10 @@ export async function loginAction(prevState: any, formData: FormData) {
     };
   }
 
+  let role: "ADMIN" | "USER" = "USER";
+
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,14 +41,17 @@ export async function loginAction(prevState: any, formData: FormData) {
       body: JSON.stringify(validatedFields.data),
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
       return {
-        message: error.message || "Login failed",
+        message: result.message || "Login failed",
       };
     }
 
-    const { user, token } = await response.json();
+    const { user, token } = result.data;
+
+    role = user.role;
 
     const cookieStore = await cookies();
     cookieStore.set("accessToken", token, {
@@ -54,13 +60,14 @@ export async function loginAction(prevState: any, formData: FormData) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24,
     });
-
-    redirect(user.role === "ADMIN" ? "/admin" : "/dashboard");
   } catch (error) {
+    console.error(error);
     return {
       message: "Network error. Please try again.",
     };
   }
+
+  redirect(role === "ADMIN" ? "/admin" : "/dashboard");
 }
 
 export async function registerAction(prevState: any, formData: FormData) {
@@ -68,6 +75,7 @@ export async function registerAction(prevState: any, formData: FormData) {
     email: formData.get("email"),
     password: formData.get("password"),
     name: formData.get("name"),
+    role: formData.get("role"),
   });
 
   if (!validatedFields.success) {
@@ -76,14 +84,18 @@ export async function registerAction(prevState: any, formData: FormData) {
     };
   }
 
+  
+
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(validatedFields.data),
     });
+
+    const result = await response.json();
 
     if (!response.ok) {
       const error = await response.json();
@@ -92,7 +104,7 @@ export async function registerAction(prevState: any, formData: FormData) {
       };
     }
 
-    const { user, token } = await response.json();
+    const { user, token } = result.data;
 
     const cookieStore = await cookies();
     cookieStore.set("accessToken", token, {
@@ -101,13 +113,15 @@ export async function registerAction(prevState: any, formData: FormData) {
       sameSite: "lax",
       maxAge: 60 * 60 * 24,
     });
-
-    redirect(user.role === "ADMIN" ? "/admin" : "/dashboard");
   } catch (error) {
     return {
       message: "Network error. Please try again.",
     };
   }
+
+  const { role } = validatedFields.data;
+
+  redirect(role === "ADMIN" ? "/admin" : "/dashboard");
 }
 
 export async function logoutAction() {

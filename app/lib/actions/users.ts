@@ -1,5 +1,3 @@
-"use server";
-
 import { z } from "zod";
 import { getTokens } from "../auth";
 import { redirect } from "next/navigation";
@@ -7,20 +5,24 @@ import { revalidatePath } from "next/cache";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-const todoSchema = z.object({
+const userSchema = z.object({
+  id: z.string().min(2, "Invalid id provided"),
+  email: z.string().email("Invalid email syntax"),
   name: z.string().min(2, "Name should be at least 2 characters"),
-  description: z.string().min(2, "Description should be at least 2 character"),
-  isComplete: z.boolean(),
+  password: z.string().min(2, "Password should be at least 2 characters"),
+  role: z.enum(["ADMIN", "USER"]),
 });
 
-export async function createTodoAction(prevState: any, formData: FormData) {
+export async function udpateProfileAction(prevState: any, formData: FormData) {
   const tokens = await getTokens();
   if (!tokens) redirect("/login");
 
-  const validatedFields = todoSchema.safeParse({
+  const validatedFields = userSchema.safeParse({
+    id: formData.get("id"),
+    email: formData.get("email"),
     name: formData.get("name"),
-    description: formData.get("description"),
-    isComplete: formData.get("isComplete") === 'true',
+    password: formData.get("password"),
+    role: formData.get("role"),
   });
 
   if (!validatedFields.success) {
@@ -30,53 +32,9 @@ export async function createTodoAction(prevState: any, formData: FormData) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': `Bearer ${tokens.accessToken}`,
-      },
-      body: JSON.stringify(validatedFields.data),
-    });
+    const { id, email, name, password, role } = validatedFields.data;
 
-    if (!response.ok) {
-      const error = await response.json();
-
-      return {
-        message: error.message || "Failed to create todo",
-      };
-    }
-
-    revalidatePath("/dashboard");
-
-    return { success: true };
-  } catch (error) {
-    return {
-      message: "Network error. Please try again",
-    };
-  }
-}
-
-const updateTodoSchema = todoSchema.omit({ name: true, description: true });
-export async function updateTodoAction(id: string, formData: FormData) {
-  const tokens = await getTokens();
-  if (!tokens) redirect("/login");
-
-  const validatedFields = updateTodoSchema.safeParse({
-    isComplete: formData.get("isComplete") === 'true',
-  });
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  const name = formData.get("name");
-  const description = formData.get("description");
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -84,13 +42,14 @@ export async function updateTodoAction(id: string, formData: FormData) {
       },
       body: JSON.stringify({
         name,
-        description,
-        isComplete: validatedFields.data,
+        email,
+        password,
+        role,
       }),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to update todo");
+      throw new Error("Failed to update user");
     }
 
     revalidatePath("/dashboard");
@@ -102,12 +61,60 @@ export async function updateTodoAction(id: string, formData: FormData) {
   }
 }
 
-export async function deleteTodoAction(id: string) {
+export async function updateUserAction(prevState: any, formData: FormData) {
+  const tokens = await getTokens();
+  if (!tokens) redirect("/login");
+
+  const validatedFields = userSchema.safeParse({
+    id: formData.get("id"),
+    email: formData.get("email"),
+    name: formData.get("name"),
+    password: formData.get("password"),
+    role: formData.get("role"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const { id, email, name, password, role } = validatedFields.data;
+
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': `Bearer ${tokens.accessToken}`,
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update user");
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+  } catch (error) {
+    return {
+      message: "Network error. Please try again",
+    };
+  }
+}
+
+export async function deleteUserAction(id: string) {
   const tokens = await getTokens();
   if (!tokens) redirect("/login");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
       method: "DELETE",
       headers: {
         'Authorization': `Bearer ${tokens.accessToken}`,
@@ -115,7 +122,7 @@ export async function deleteTodoAction(id: string) {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to delete todo");
+      throw new Error("Failed to delete user");
     }
 
     revalidatePath("/dashboard");
