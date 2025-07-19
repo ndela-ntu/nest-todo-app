@@ -34,7 +34,7 @@ export async function udpateProfileAction(prevState: any, formData: FormData) {
   try {
     const { id, email, name, password, role } = validatedFields.data;
 
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +82,7 @@ export async function updateUserAction(prevState: any, formData: FormData) {
   try {
     const { id, email, name, password, role } = validatedFields.data;
 
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -114,7 +114,7 @@ export async function deleteUserAction(id: string) {
   if (!tokens) redirect("/login");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
       method: "DELETE",
       headers: {
         'Authorization': `Bearer ${tokens.accessToken}`,

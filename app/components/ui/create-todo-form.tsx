@@ -75,7 +75,6 @@ export default function CreateTodoForm() {
           id="isComplete"
           name="isComplete"
           type="checkbox"
-          disabled
           className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
         />
         {state.errors?.isComplete && (

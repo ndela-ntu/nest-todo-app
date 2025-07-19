@@ -1,4 +1,4 @@
-'use server';
+"use server";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -30,33 +30,35 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!tokens) return null;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/profile`, {
       headers: {
-        'Authorization': `Bearer ${tokens.accessToken}`,
+        Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return null;
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch {
     return null;
   }
 }
 
 export async function requireAuth(): Promise<User | null> {
-    const user = getCurrentUser();
-    if (!user) {
-        redirect('/login');
-    }
+  const user = getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
 
-    return user;
+  return user;
 }
 
 export async function requireAdmin(): Promise<User> {
-    const user = await requireAuth();
-    if (user?.role !== 'ADMIN') {
-        redirect('/dashboard');
-    }
-    return user;
+  const user = await requireAuth();
+  if (user?.role !== "ADMIN") {
+    redirect("/dashboard");
+  }
+  return user;
 }

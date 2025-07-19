@@ -27,7 +27,7 @@ export async function getTodos(): Promise<Todo[] | { message: string }> {
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
@@ -35,7 +35,10 @@ export async function getTodos(): Promise<Todo[] | { message: string }> {
 
     if (!response.ok) return { message: "Failed fetching todos" };
 
-    return await response.json();
+    const result = await response.json();
+    const { data } = result;
+
+    return await data;
   } catch (error) {
     return { message: "Error fetching todos" };
   }
@@ -48,15 +51,17 @@ export async function getTodoById(
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return { message: "Failed fetching todo" };
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch (error) {
     return { message: "Error fetching todo" };
   }
@@ -69,15 +74,17 @@ export async function getTodoByUser(
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos/user${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos/user${userId}`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return { message: "Failed fetching todo by user" };
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch (error) {
     return { message: "Error fetching todo" };
   }
@@ -88,15 +95,17 @@ export async function getUsers(): Promise<User[] | { message: string }> {
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return { message: "Failed fetching users" };
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch (error) {
     return { message: "Error fetching todo" };
   }
@@ -107,15 +116,17 @@ export async function getUserProfile(): Promise<User | { message: string }> {
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/profile`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return { message: "Failed fetching user profile" };
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch (error) {
     return { message: "Error fetching todo" };
   }
@@ -128,15 +139,17 @@ export async function getUserById(
   if (!tokens) return { message: "Missing/Expired tokens" };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/users/${id}`, {
       headers: {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
     if (!response.ok) return { message: "Failed fetching user by id" };
+    const result = await response.json();
+    const { data } = result;
 
-    return await response.json();
+    return await data;
   } catch (error) {
     return { message: "Error fetching todo" };
   }

@@ -20,7 +20,7 @@ export async function createTodoAction(prevState: any, formData: FormData) {
   const validatedFields = todoSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
-    isComplete: formData.get("isComplete") === 'true',
+    isComplete: formData.get("isComplete") === "on",
   });
 
   if (!validatedFields.success) {
@@ -30,11 +30,11 @@ export async function createTodoAction(prevState: any, formData: FormData) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        'Authorization': `Bearer ${tokens.accessToken}`,
+        Authorization: `Bearer ${tokens.accessToken}`,
       },
       body: JSON.stringify(validatedFields.data),
     });
@@ -57,13 +57,14 @@ export async function createTodoAction(prevState: any, formData: FormData) {
   }
 }
 
-const updateTodoSchema = todoSchema.omit({ name: true, description: true });
 export async function updateTodoAction(id: string, formData: FormData) {
   const tokens = await getTokens();
   if (!tokens) redirect("/login");
 
-  const validatedFields = updateTodoSchema.safeParse({
-    isComplete: formData.get("isComplete") === 'true',
+  const validatedFields = todoSchema.safeParse({
+    isComplete: formData.get("isComplete") === "true",
+    name: formData.get("name"),
+    description: formData.get("description"),
   });
 
   if (!validatedFields.success) {
@@ -72,21 +73,41 @@ export async function updateTodoAction(id: string, formData: FormData) {
     };
   }
 
-  const name = formData.get("name");
-  const description = formData.get("description");
-
   try {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        'Authorization': `Bearer ${tokens.accessToken}`,
+        Authorization: `Bearer ${tokens.accessToken}`,
       },
-      body: JSON.stringify({
-        name,
-        description,
-        isComplete: validatedFields.data,
-      }),
+      body: JSON.stringify(validatedFields.data),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update todo");
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+  } catch (error) {
+    return {
+      message: "Network error. Please try again",
+    };
+  }
+}
+
+export async function toggleIsComplete(id: string, isComplete: boolean) {
+  const tokens = await getTokens();
+  if (!tokens) redirect("/login");
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${tokens.accessToken}`,
+      },
+      body: JSON.stringify({ isComplete }),
     });
 
     if (!response.ok) {
@@ -107,10 +128,10 @@ export async function deleteTodoAction(id: string) {
   if (!tokens) redirect("/login");
 
   try {
-    const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/todos/${id}`, {
       method: "DELETE",
       headers: {
-        'Authorization': `Bearer ${tokens.accessToken}`,
+        Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
 
